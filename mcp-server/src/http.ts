@@ -16,8 +16,8 @@ const app = createMcpExpressApp({
   allowedHosts: [
     "localhost",
     "127.0.0.1",
-    // Add your Render domain here after deployment
-    // "bilisfiber-mcp.onrender.com"
+    "uniformed-recycler-strode.ngrok-free.dev",
+    "bilisfiber-mcp.onrender.com",
   ],
 });
 
