@@ -13,10 +13,12 @@ const app = createMcpExpressApp({
     allowedHosts: [
         "localhost",
         "127.0.0.1",
-        "uniformed-recycler-strode.ngrok-free.dev",
+        // Add your Render domain here after deployment
+        // "bilisfiber-mcp.onrender.com"
     ],
 });
-const PORT = 3001;
+// Render provides the PORT environment variable
+const PORT = Number(process.env.PORT) || 3001;
 app.get("/", (_req, res) => {
     res.json({
         name: "Bilis Fiber MCP Server",
@@ -43,11 +45,11 @@ app.post("/mcp", async (req, res) => {
         console.log("Current sessions:", Object.keys(transports));
         let transport;
         const sessionId = req.headers["mcp-session-id"];
-        // Existing MCP session
+        // Existing MCP Session
         if (sessionId && transports[sessionId]) {
             transport = transports[sessionId];
         }
-        // New MCP session initialization
+        // New MCP Session
         else if (!sessionId && isInitializeRequest(req.body)) {
             transport = new StreamableHTTPServerTransport({
                 sessionIdGenerator: () => randomUUID(),
@@ -73,7 +75,7 @@ app.post("/mcp", async (req, res) => {
             return;
         }
         await transport.handleRequest(req, res, req.body);
-        // Save session after MCP response generated
+        // Save transport after initialization
         if (transport.sessionId &&
             !transports[transport.sessionId]) {
             transports[transport.sessionId] = transport;
@@ -96,5 +98,9 @@ app.post("/mcp", async (req, res) => {
     }
 });
 app.listen(PORT, () => {
-    console.log(`HTTP MCP Server listening on http://localhost:${PORT}`);
+    console.log("==================================");
+    console.log("🚀 Bilis Fiber MCP Server Started");
+    console.log(`🌐 Listening on port ${PORT}`);
+    console.log(`📡 MCP Endpoint: /mcp`);
+    console.log("==================================");
 });

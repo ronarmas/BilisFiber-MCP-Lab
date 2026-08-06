@@ -1,22 +1,23 @@
-//{
-//  "scripts": {
- //   "dev": "tsx watch src/index.ts",
- //   "start": "tsx src/index.ts"
- // }
-//}
-
 {
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+
     "rootDir": "./src",
     "outDir": "./dist",
-    "strict": true,
+
+    "strict": false,
+
+    "types": ["node"],
+
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "src/**/*.ts"
