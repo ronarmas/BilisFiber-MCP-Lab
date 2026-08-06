@@ -1,0 +1,43 @@
+import type { customerService } from './interfaces/service.interface';
+
+export const customerServices: customerService[] = [
+  {
+    accountNumber: '100001',
+    serviceId: 'SRV-100001',
+    serviceName: 'Fiber Internet 2000',
+    category: 'Internet',
+    speed: '2000 Mbps',
+    monthlyFee: 2499,
+    status: 'ACTIVE',
+    barangay: 'Santol',
+    city: 'Balagtas',
+    province: 'Bulacan',
+    installationAddress: 'Blk 12 Lot 8, Santol, Balagtas, Bulacan',
+  },
+  {
+    accountNumber: '100002',
+    serviceId: 'SRV-100002',
+    serviceName: 'Fiber Internet 1500',
+    category: 'Internet',
+    speed: '1500 Mbps',
+    monthlyFee: 1999,
+    status: 'ACTIVE',
+    barangay: 'Bagbaguin',
+    city: 'Caloocan',
+    province: 'Metro Manila',
+    installationAddress: '45 Rizal Avenue, Bagbaguin, Caloocan',
+  },
+  {
+    accountNumber: '100003',
+    serviceId: 'SRV-100003',
+    serviceName: 'Fiber Internet 1000',
+    category: 'Internet',
+    speed: '1000 Mbps',
+    monthlyFee: 1499,
+    status: 'ACTIVE',
+    barangay: 'Batasan Hills',
+    city: 'Quezon City',
+    province: 'Metro Manila',
+    installationAddress: '22 Mindanao Avenue, Batasan Hills, Quezon City',
+  },
+];

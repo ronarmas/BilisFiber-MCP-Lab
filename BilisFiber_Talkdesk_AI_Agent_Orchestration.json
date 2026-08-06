@@ -1,0 +1,456 @@
+{
+  "$schema": "https://developer.talkdesk.com/schemas/ai-orchestration/v1.0",
+  "agentSystemI": "bilis_fiber_support_v1",
+  "agents": [
+    {
+      "name": "Bilis Fiber Customer Support AI Agent",
+      "version": "1.0",
+      "description": "AI Agent orchestration template for Bilis Fiber technical support using MCP tools",
+      "agent": {
+        "role": "Technical Support AI Agent",
+        "provider": "Talkdesk AI Agent",
+        "objective": "Resolve customer internet service issues through customer verification, diagnostics, troubleshooting, and escalation",
+        "communicationStyle": {
+          "tone": ["friendly", "professional", "concise"],
+          "language": "English",
+          "defaultGreeting": "Hello! Thank you for contacting Bilis Fiber support. I'm your virtual assistant. How can I help you with your internet service today?"
+        }
+      },
+      "authentication": {
+        "type": "oauth2",
+        "grantType": "client_credentials",
+        "tokenEndpoint": "https://auth.talkdesk.com/oauth/token",
+        "scopes": ["ai:orchestrate", "mcp:execute", "customer:read"]
+      },
+      "mcpConnection": {
+        "transport": "streamable-http",
+        "endpoint": "/mcp",
+        "timeout": 30000,
+        "retryPolicy": {
+          "maxRetries": 3,
+          "backoffMultiplier": 2,
+          "initialDelay": 1000
+        }
+      },
+      "sessionManagement": {
+        "maxDuration": 900,
+        "idleTimeout": 120,
+        "persistState": true,
+        "contextRetention": "full_session"
+      },
+      "tools": [
+        {
+          "name": "find_customer",
+          "description": "Find customer information using account number",
+          "category": "Customer Management",
+          "required": true,
+          "timeout": 5000,
+          "retryCount": 2,
+          "parameters": {
+            "accountNumber": {
+              "type": "string",
+              "required": true,
+              "validation": "^[A-Z0-9]{8,12}$"
+            }
+          }
+        },
+        {
+          "name": "get_tickets_by_account",
+          "description": "Retrieve customer ticket history and active incidents",
+          "category": "Incident Management",
+          "required": false,
+          "timeout": 5000,
+          "parameters": {
+            "accountId": {
+              "type": "string",
+              "required": true
+            },
+            "status": {
+              "type": "string",
+              "enum": ["open", "in_progress", "resolved", "all"],
+              "default": "open"
+            }
+          }
+        },
+        {
+          "name": "check_outage",
+          "description": "Check if customer location has an active outage",
+          "category": "Network Monitoring",
+          "required": false,
+          "timeout": 3000,
+          "parameters": {
+            "locationId": {
+              "type": "string",
+              "required": true
+            }
+          }
+        },
+        {
+          "name": "get_diagnostics",
+          "description": "Retrieve ONT and service diagnostics",
+          "category": "Technical Diagnostics",
+          "required": false,
+          "timeout": 10000,
+          "parameters": {
+            "deviceId": {
+              "type": "string",
+              "required": true
+            },
+            "diagnosticType": {
+              "type": "string",
+              "enum": ["full", "connectivity", "signal", "hardware"],
+              "default": "full"
+            }
+          }
+        },
+        {
+          "name": "reboot_device",
+          "description": "Restart customer ONT device after approval",
+          "category": "Remote Resolution",
+          "requiresConfirmation": true,
+          "confirmationMessage": "I'll need to restart your modem. This will temporarily disconnect your internet for about 2-3 minutes. Would you like me to proceed?",
+          "timeout": 15000,
+          "parameters": {
+            "deviceId": {
+              "type": "string",
+              "required": true
+            },
+            "rebootType": {
+              "type": "string",
+              "enum": ["soft", "hard"],
+              "default": "soft"
+            }
+          }
+        },
+        {
+          "name": "get_appointment",
+          "description": "Retrieve technician appointment details",
+          "category": "Field Service",
+          "required": false,
+          "timeout": 5000,
+          "parameters": {
+            "accountId": {
+              "type": "string",
+              "required": true
+            },
+            "appointmentType": {
+              "type": "string",
+              "enum": ["upcoming", "past", "all"],
+              "default": "upcoming"
+            }
+          }
+        }
+      ],
+      "orchestration": {
+        "initialIntent": "internet_connectivity_issue",
+        "intentDetection": {
+          "confidenceThreshold": 0.7,
+          "fallbackIntent": "general_support"
+        },
+        "workflow": {
+          "steps": [
+            {
+              "id": "step_1_identify_customer",
+              "name": "Identify Customer",
+              "description": "Verify customer identity and retrieve account information",
+              "action": {
+                "type": "call_tool",
+                "tool": "find_customer",
+                "inputMapping": {
+                  "accountNumber": "$session.customerInput.accountNumber"
+                },
+                "outputMapping": {
+                  "customer": "$context.customer"
+                }
+              },
+              "transitions": {
+                "success": "step_2_check_tickets",
+                "failure": "handle_customer_not_found"
+              }
+            },
+            {
+              "id": "step_2_check_tickets",
+              "name": "Check Existing Tickets",
+              "description": "Review customer's active support tickets",
+              "action": {
+                "type": "call_tool",
+                "tool": "get_tickets_by_account",
+                "inputMapping": {
+                  "accountId": "$context.customer.id",
+                  "status": "open"
+                },
+                "outputMapping": {
+                  "tickets": "$context.tickets"
+                }
+              },
+              "transitions": {
+                "success": "step_3_check_outage",
+                "failure": "step_3_check_outage"
+              }
+            },
+            {
+              "id": "step_3_check_outage",
+              "name": "Check Network Outage",
+              "description": "Check if customer's area has an active outage",
+              "action": {
+                "type": "call_tool",
+                "tool": "check_outage",
+                "inputMapping": {
+                  "locationId": "$context.customer.locationId"
+                },
+                "outputMapping": {
+                  "outage": "$context.outage"
+                }
+              },
+              "transitions": {
+                "success": {
+                  "condition": "$context.outage.active == true",
+                  "target": "handle_outage_found"
+                },
+                "default": "step_4_run_diagnostics"
+              }
+            },
+            {
+              "id": "step_4_run_diagnostics",
+              "name": "Run Diagnostics",
+              "description": "Run technical diagnostics on customer's ONT device",
+              "action": {
+                "type": "call_tool",
+                "tool": "get_diagnostics",
+                "inputMapping": {
+                  "deviceId": "$context.customer.deviceId",
+                  "diagnosticType": "full"
+                },
+                "outputMapping": {
+                  "diagnostics": "$context.diagnostics"
+                }
+              },
+              "transitions": {
+                "success": {
+                  "condition": "$context.diagnostics.status == 'offline' || $context.diagnostics.signalStrength < 30",
+                  "target": "step_5_request_reboot"
+                },
+                "default": "handle_troubleshooting"
+              }
+            },
+            {
+              "id": "step_5_request_reboot",
+              "name": "Request Remote Reboot",
+              "description": "Request customer approval for remote device reboot",
+              "action": {
+                "type": "customer_confirmation",
+                "message": "I've detected an issue with your modem. A restart might resolve this. Would you like me to restart your modem remotely? This will take about 2-3 minutes.",
+                "options": ["Yes, restart it", "No, I'll restart it myself", "I need more information"]
+              },
+              "transitions": {
+                "Yes, restart it": "step_6_execute_reboot",
+                "No, I'll restart it myself": "handle_self_reboot",
+                "I need more information": "handle_provide_details",
+                "timeout": "handle_no_response"
+              }
+            },
+            {
+              "id": "step_6_execute_reboot",
+              "name": "Execute Reboot",
+              "description": "Execute remote device reboot",
+              "action": {
+                "type": "call_tool",
+                "tool": "reboot_device",
+                "inputMapping": {
+                  "deviceId": "$context.customer.deviceId",
+                  "rebootType": "soft"
+                },
+                "outputMapping": {
+                  "rebootStatus": "$context.rebootStatus"
+                }
+              },
+              "transitions": {
+                "success": "step_7_verify_resolution",
+                "failure": "handle_reboot_failed"
+              }
+            },
+            {
+              "id": "step_7_verify_resolution",
+              "name": "Verify Resolution",
+              "description": "Check if the issue has been resolved",
+              "action": {
+                "type": "ask_customer",
+                "message": "The restart has been completed. Is your internet connection working now?",
+                "options": ["Yes, it's working", "No, still having issues"]
+              },
+              "transitions": {
+                "Yes, it's working": "handle_resolution_confirmed",
+                "No, still having issues": "step_8_escalate",
+                "timeout": "handle_no_response"
+              }
+            },
+            {
+              "id": "step_8_escalate",
+              "name": "Escalate to Human Agent",
+              "description": "Transfer to human support agent",
+              "action": {
+                "type": "transfer_to_human",
+                "queue": "technical_support_l2",
+                "priority": "high",
+                "contextTransfer": {
+                  "customer": "$context.customer",
+                  "tickets": "$context.tickets",
+                  "diagnostics": "$context.diagnostics",
+                  "interactionSummary": "$session.summary"
+                }
+              }
+            }
+          ],
+          "handlers": {
+            "handle_customer_not_found": {
+              "name": "Customer Not Found",
+              "description": "Handle case when customer account cannot be found",
+              "action": {
+                "type": "send_message",
+                "message": "I'm unable to locate your account with the information provided. Could you double-check your account number? It should be 8-12 characters long.",
+                "retryAllowed": true,
+                "maxRetries": 2
+              },
+              "fallback": {
+                "type": "transfer_to_human",
+                "queue": "customer_service",
+                "priority": "normal"
+              }
+            },
+            "handle_outage_found": {
+              "name": "Outage Found",
+              "description": "Inform customer about active outage",
+              "action": {
+                "type": "send_message",
+                "template": "There's currently a service outage in your area. Our team is working on it.\n\nEstimated restoration: ${context.outage.estimatedRestore}\nAffected services: ${context.outage.affectedServices}\n\nWe apologize for the inconvenience. You'll receive a notification when service is restored."
+              },
+              "next": "close_interaction"
+            },
+            "handle_troubleshooting": {
+              "name": "General Troubleshooting",
+              "description": "Provide general troubleshooting steps",
+              "action": {
+                "type": "send_message",
+                "message": "Your modem appears to be online, but you're experiencing connectivity issues. Let me suggest some quick checks:\n\n1. Check if the issue is with all devices or just one\n2. Verify WiFi is enabled on your device\n3. Try connecting with an ethernet cable if possible\n\nWould you like me to run any additional tests?"
+              }
+            },
+            "handle_self_reboot": {
+              "name": "Self Reboot Instructions",
+              "description": "Provide manual reboot instructions",
+              "action": {
+                "type": "send_message",
+                "message": "To restart your modem manually:\n\n1. Unplug the power cable from the back of the modem\n2. Wait 30 seconds\n3. Plug the power cable back in\n4. Wait 2-3 minutes for all lights to stabilize\n\nWould you like me to check the connection after you've done this?"
+              }
+            },
+            "handle_provide_details": {
+              "name": "Provide Reboot Details",
+              "description": "Explain reboot process in detail",
+              "action": {
+                "type": "send_message",
+                "message": "A remote restart is safe and usually resolves connectivity issues. Here's what happens:\n\n- Your modem will reboot just like restarting a computer\n- Internet will be temporarily disconnected for 2-3 minutes\n- All your WiFi settings will remain unchanged\n- No data or settings will be lost\n\nWould you like me to proceed with the restart?"
+              }
+            },
+            "handle_resolution_confirmed": {
+              "name": "Resolution Confirmed",
+              "description": "Issue resolved successfully",
+              "action": {
+                "type": "send_message",
+                "message": "Great! I'm glad we could get your internet working again. Is there anything else I can help you with today?"
+              },
+              "next": "close_interaction"
+            },
+            "handle_reboot_failed": {
+              "name": "Reboot Failed",
+              "description": "Handle failed reboot attempt",
+              "action": {
+                "type": "send_message",
+                "message": "I wasn't able to restart your modem remotely. This sometimes happens if the device is not responding. Let me escalate this to our technical team for further investigation."
+              },
+              "next": "step_8_escalate"
+            },
+            "handle_no_response": {
+              "name": "No Response",
+              "description": "Handle customer timeout",
+              "action": {
+                "type": "send_message",
+                "message": "I haven't received a response. I'll wait a moment longer, but if you're still there, please let me know how you'd like to proceed."
+              }
+            },
+            "close_interaction": {
+              "name": "Close Interaction",
+              "description": "End the support session",
+              "action": {
+                "type": "end_session",
+                "satisfactionSurvey": true,
+                "ticketResolution": "auto_resolve"
+              }
+            }
+          }
+        }
+      },
+      "businessRules": [
+        {
+          "id": "rule_01_customer_verification",
+          "rule": "Customer Verification",
+          "instruction": "Always verify customer identity before accessing account information",
+          "enforcement": "block_action",
+          "scope": ["find_customer"]
+        },
+        {
+          "id": "rule_02_device_restart_approval",
+          "rule": "Device Restart Approval",
+          "instruction": "Never reboot customer equipment without explicit customer approval",
+          "enforcement": "require_confirmation",
+          "scope": ["reboot_device"]
+        },
+        {
+          "id": "rule_03_outage_handling",
+          "rule": "Outage Handling",
+          "instruction": "If an active outage exists at customer location, provide outage information instead of troubleshooting",
+          "enforcement": "skip_steps",
+          "condition": "context.outage.active == true",
+          "skipSteps": ["step_4_run_diagnostics", "step_5_request_reboot", "step_6_execute_reboot"]
+        },
+        {
+          "id": "rule_04_escalation_criteria",
+          "rule": "Escalation Criteria",
+          "instruction": "Escalate to human agent after 3 unsuccessful troubleshooting attempts or for specific high-priority issues",
+          "enforcement": "conditional_action",
+          "condition": "session.troubleshootingAttempts >= 3 || context.diagnostics.criticalError == true"
+        },
+        {
+          "id": "rule_05_data_privacy",
+          "rule": "Data Privacy",
+          "instruction": "Mask sensitive customer information in logs and transcripts",
+          "enforcement": "mask_data",
+          "fieldsToMask": ["accountNumber", "phoneNumber", "email", "address"]
+        }
+      ],
+      "errorHandling": {
+        "toolTimeout": 30000,
+        "maxRetries": 2,
+        "retryStrategy": "exponential_backoff",
+        "fallbackAction": "transfer_to_human_agent",
+        "errorMessages": {
+          "customerNotFound": "I'm unable to locate your account. Let me transfer you to a specialist.",
+          "diagnosticFailed": "I'm having trouble running diagnostics on your device. Let me escalate this.",
+          "systemError": "I apologize, but I'm experiencing technical difficulties. Let me transfer you to our support team."
+        }
+      },
+      "monitoring": {
+        "metrics": [
+          "resolution_rate",
+          "average_handling_time",
+          "escalation_rate",
+          "customer_satisfaction_score",
+          "first_contact_resolution"
+        ],
+        "logging": {
+          "level": "info",
+          "redactPII": true,
+          "logPerformance": true
+        }
+      }
+    }
+  ]
+}
