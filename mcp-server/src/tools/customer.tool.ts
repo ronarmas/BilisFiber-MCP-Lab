@@ -24,11 +24,13 @@ export function registerCustomerTools(server: any) {
 
     },
 
+async ({
+  accountNumber,
+}: {
+  accountNumber: string;
+}) => {
 
-    async ({
-      accountNumber,
-    }) => {
-
+    
       console.log(
         "Finding customer:",
         accountNumber,

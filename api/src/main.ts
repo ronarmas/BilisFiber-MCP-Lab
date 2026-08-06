@@ -1,10 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors();
 
   const config = new DocumentBuilder()
     .setTitle('BilisFiber API')
@@ -16,10 +17,12 @@ async function bootstrap() {
 
   SwaggerModule.setup('swagger', app, document);
 
-  await app.listen(3000);
+  const port = process.env.PORT || 3000;
 
-  console.log('🚀 API running');
-  console.log('📚 Swagger: http://localhost:3000/swagger');
+  await app.listen(port);
+
+  console.log(`🚀 API running on port ${port}`);
+  console.log(`📚 Swagger: http://localhost:${port}/swagger`);
 }
 
 bootstrap();
