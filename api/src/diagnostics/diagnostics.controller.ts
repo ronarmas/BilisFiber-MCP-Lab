@@ -39,4 +39,11 @@ export class DiagnosticsController {
   ) {
   return this.diagnosticsService.refreshStatus(serviceId);
   }
+
+  @Post(':serviceId/reset')
+resetDiagnostics(
+  @Param('serviceId') serviceId: string,
+) {
+  return this.diagnosticsService.resetDiagnostics(serviceId);
+}
 }

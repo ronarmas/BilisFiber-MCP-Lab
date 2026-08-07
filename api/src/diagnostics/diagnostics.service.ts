@@ -115,4 +115,41 @@ const diagnostic = diagnostics.find(d => d.serviceId === serviceId,);
     };
   }
 
+
+// Reset diagnostics to original demo state
+resetDiagnostics(serviceId: string) {
+
+    const diagnostic = diagnostics.find(
+      d => d.serviceId === serviceId,
+    );
+
+    if (!diagnostic) {
+      throw new NotFoundException(
+        `Device not found for service ${serviceId}`,
+      );
+    }
+
+    switch (serviceId) {
+
+      case 'SRV-100002':
+        diagnostic.ontStatus = DeviceStatus.ONLINE;
+        diagnostic.routerStatus = DeviceStatus.ONLINE;
+        diagnostic.connectionStatus = ConnectionStatus.DOWN;
+        diagnostic.opticalSignal = '-19.2 dBm';
+        diagnostic.los = false;
+        diagnostic.lastSeen = '2026-08-06T09:45:00';
+        break;
+
+      default:
+        return {
+          message: `No reset profile defined for ${serviceId}`,
+        };
+    }
+
+    return {
+      serviceId: diagnostic.serviceId,
+      message: 'Diagnostics reset successfully.',
+      diagnostics: diagnostic,
+    };
+  }
 }
