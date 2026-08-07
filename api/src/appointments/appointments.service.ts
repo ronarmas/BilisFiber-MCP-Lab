@@ -3,7 +3,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { appointments } from './appointments.data';
+import { appointments } from '../mock-data/customer-records.data';
 import { Appointment } from './interfaces/appointment.interface';
 import { AppointmentStatus } from './enums/appointment-status.enum';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';

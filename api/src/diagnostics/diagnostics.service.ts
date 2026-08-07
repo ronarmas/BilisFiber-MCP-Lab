@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { diagnostics } from './diagnostics.data';
+//import { diagnostics } from './diagnostics.data';
+import { diagnostics } from '../mock-data/customer-records.data';
+
 import { DeviceStatus } from './enums/device-status.enum';
 import { ConnectionStatus } from './enums/connection-status.enum';
 

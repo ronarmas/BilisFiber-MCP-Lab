@@ -3,9 +3,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { tickets } from './tickets.data';
-import { customerRecords } from '../mock-data/customer-records.data';
-
+//import { tickets } from './tickets.data';
+import { customerRecords, tickets } from '../mock-data/customer-records.data';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { TicketStatus } from './enums/ticket-status.enum';
 import { TicketPriority } from './enums/ticket-priority.enum';

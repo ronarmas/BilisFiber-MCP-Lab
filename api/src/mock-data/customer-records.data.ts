@@ -721,3 +721,14 @@ export function getCustomerByServiceId(serviceId: string): CustomerRecord | unde
     record.services.some(service => service.serviceId === serviceId,),
   );
 }
+export const appointments = customerRecords.flatMap(
+  customer => customer.appointments,
+);
+
+export const diagnostics = customerRecords.map(
+  customer => customer.diagnostics,
+);
+
+export const tickets = customerRecords.flatMap(
+  record => record.tickets,
+);
