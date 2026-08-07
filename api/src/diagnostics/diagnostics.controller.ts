@@ -33,7 +33,7 @@ export class DiagnosticsController {
     return this.diagnosticsService.rebootDevice(serviceId);
   }
 
-  @Get(':serviceId/refresh')
+  @Post(':serviceId/refresh')
   refreshStatus(
   @Param('serviceId') serviceId: string,
   ) {
