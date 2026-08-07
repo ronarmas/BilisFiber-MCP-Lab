@@ -65,7 +65,7 @@ export async function rebootDevice(serviceId) {
 }
 export async function refreshDiagnostics(serviceId) {
     const response = await fetch(`${API_URL}/diagnostics/${serviceId}/refresh`, {
-        method: "POST",
+        method: "GET",
         headers: {
             "Content-Type": "application/json",
         },

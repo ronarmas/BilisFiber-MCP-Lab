@@ -132,7 +132,7 @@ export async function refreshDiagnostics(
   const response = await fetch(
     `${API_URL}/diagnostics/${serviceId}/refresh`,
     {
-      method: "POST",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
