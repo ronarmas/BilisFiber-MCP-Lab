@@ -8,13 +8,9 @@ import { ConnectionStatus } from './enums/connection-status.enum';
 
 @Injectable()
 export class DiagnosticsService {
-
   // Get diagnostics by service ID
   getDiagnostics(serviceId: string) {
-
-    const diagnostic = diagnostics.find(
-      d => d.serviceId === serviceId,
-    );
+const diagnostic = diagnostics.find(d => d.serviceId === serviceId,);
 
     if (!diagnostic) {
       throw new NotFoundException(
