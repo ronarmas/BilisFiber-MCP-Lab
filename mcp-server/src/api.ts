@@ -126,6 +126,29 @@ export async function rebootDevice(
   return response.json();
 }
 
+export async function refreshDiagnostics(
+  serviceId: string,
+) {
+  const response = await fetch(
+    `${API_URL}/diagnostics/${serviceId}/refresh`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Unable to refresh diagnostics for ${serviceId}`,
+    );
+  }
+
+  return response.json();
+}
+
 // =====================================================
 // Outages
 // =====================================================

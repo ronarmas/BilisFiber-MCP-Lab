@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import {
   getDiagnostics,
-  rebootDevice,
+  rebootDevice, refreshDiagnostics,
 } from "../api.js";
 
 export function registerDiagnosticsTools(
@@ -77,5 +77,41 @@ export function registerDiagnosticsTools(
 
     },
   );
+
+// =====================================================
+// Refresh Diagnostics
+// =====================================================
+
+server.tool(
+  "refresh_diagnostics",
+  "Refresh the customer's diagnostics after a remote reboot.",
+  {
+    serviceId: z.string().describe(
+      "Customer service ID",
+    ),
+  },
+
+  async ({ serviceId }) => {
+
+    const diagnostics =
+      await refreshDiagnostics(
+        serviceId,
+      );
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            diagnostics,
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+
+  },
+);
 
 }
