@@ -234,7 +234,7 @@ export const customerRecords: CustomerRecord[] = [
       serviceId: 'SRV-100002',
       ontStatus: DeviceStatus.ONLINE,
       routerStatus: DeviceStatus.ONLINE,
-      connectionStatus: ConnectionStatus.UP,
+      connectionStatus: ConnectionStatus.DOWN,
       opticalSignal: '-19.2 dBm',
       los: false,
       lastSeen: '2026-08-06T09:45:00',
@@ -357,7 +357,7 @@ export const customerRecords: CustomerRecord[] = [
 
     diagnostics: {
       serviceId: 'SRV-100004',
-      ontStatus: DeviceStatus.OFFLINE,
+      ontStatus: DeviceStatus.ONLINE,
       routerStatus: DeviceStatus.ONLINE,
       connectionStatus: ConnectionStatus.DOWN,
       opticalSignal: '-27.5 dBm',
@@ -558,7 +558,7 @@ export const customerRecords: CustomerRecord[] = [
         visitDate: '2026-08-12',
         timeSlot: '01:00 PM - 03:00 PM',
         purpose: 'Fiber Cable Replacement',
-        status: AppointmentStatus.PENDING,
+        status: AppointmentStatus.CONFIRMED,
       },
     ],
   },
